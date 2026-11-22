@@ -41,7 +41,7 @@ jobs:
         run: tar -czf recallflow-dist-${{ github.ref_name }}.tar.gz dist package.json .env.example
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: recallflow-dist-${{ github.ref_name }}
           path: recallflow-dist-${{ github.ref_name }}.tar.gz
