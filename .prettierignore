@@ -1,0 +1,8 @@
+dist/
+node_modules/
+coverage/
+bun.lock
+package-lock.json
+*.tsbuildinfo
+.husky/_/
+components/ui/

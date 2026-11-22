@@ -1,0 +1,192 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive helpers
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
+    }
+
+    function isValidGamification(g) {
+      return g is map
+        && g.keys().hasAll(['xp', 'streakDays', 'lastPracticeDate', 'todayReviewedCount', 'dailyGoal', 'bestBlitzScore'])
+        && g.keys().hasOnly(['xp', 'streakDays', 'lastPracticeDate', 'todayReviewedCount', 'dailyGoal', 'bestBlitzScore'])
+        && g.xp is number && g.xp >= 0 && g.xp <= 1000000
+        && g.streakDays is number && g.streakDays >= 0 && g.streakDays <= 10000
+        && g.lastPracticeDate is string && g.lastPracticeDate.size() <= 20
+        && g.todayReviewedCount is number && g.todayReviewedCount >= 0 && g.todayReviewedCount <= 5000
+        && g.dailyGoal is number && g.dailyGoal >= 1 && g.dailyGoal <= 50
+        && g.bestBlitzScore is number && g.bestBlitzScore >= 0 && g.bestBlitzScore <= 100000;
+    }
+
+    function isValidProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'theme', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'theme', 'subjects', 'approvedTags', 'staleLimit', 'enforceStaleGate', 'gamification', 'createdAt', 'updatedAt'])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && data.theme in ['dark', 'light']
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100))
+        && (!('subjects' in data) || (data.subjects is list && data.subjects.size() <= 30 && (data.subjects.size() == 0 || (data.subjects[0] is string && data.subjects[0].size() <= 60))))
+        && (!('approvedTags' in data) || (data.approvedTags is list && data.approvedTags.size() <= 50 && (data.approvedTags.size() == 0 || (data.approvedTags[0] is string && data.approvedTags[0].size() <= 40))))
+        && (!('staleLimit' in data) || (data.staleLimit is number && data.staleLimit >= 1 && data.staleLimit <= 50))
+        && (!('enforceStaleGate' in data) || data.enforceStaleGate is bool)
+        && (!('gamification' in data) || isValidGamification(data.gamification))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSRSData(srs) {
+      return srs is map
+        && srs.keys().hasAll(['stability', 'difficulty', 'reps', 'intervalDays', 'lastReviewedAt', 'nextReviewDate', 'retentionScore'])
+        && srs.keys().hasOnly(['stability', 'difficulty', 'reps', 'intervalDays', 'lastReviewedAt', 'nextReviewDate', 'retentionScore'])
+        && srs.stability is number && srs.stability >= 0 && srs.stability <= 10000
+        && srs.difficulty is number && srs.difficulty >= 1 && srs.difficulty <= 10
+        && srs.reps is number && srs.reps >= 0 && srs.reps <= 100000
+        && srs.intervalDays is number && srs.intervalDays >= 0 && srs.intervalDays <= 10000
+        && srs.lastReviewedAt is string && srs.lastReviewedAt.size() <= 64
+        && srs.nextReviewDate is string && srs.nextReviewDate.size() <= 64
+        && srs.retentionScore is number && srs.retentionScore >= 0 && srs.retentionScore <= 100;
+    }
+
+    function isValidCue(data, userId, cueId) {
+      return data.keys().hasAll(['id', 'ownerId', 'title', 'summary', 'content', 'category', 'brainRegion', 'status', 'tags', 'x', 'y', 'srsData', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'title', 'summary', 'content', 'category', 'subject', 'brainRegion', 'cueIcon', 'cueColor', 'status', 'tags', 'codeSnippet', 'x', 'y', 'srsData', 'createdAt', 'updatedAt'])
+        && data.id == cueId
+        && isValidId(data.id)
+        && data.ownerId == userId
+        && isValidId(data.ownerId)
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.summary is string && data.summary.size() <= 500
+        && data.content is string && data.content.size() <= 8000
+        && data.category in ['webdev', 'psychology', 'general', 'todos', 'insight']
+        && (!('subject' in data) || (data.subject is string && data.subject.size() <= 60))
+        && data.brainRegion in ['prefrontal', 'hippocampus', 'neocortex', 'amygdala', 'cerebellum']
+        && data.status in ['encoding', 'consolidating', 'mastered', 'fading']
+        && (!('cueIcon' in data) || (data.cueIcon is string && data.cueIcon.size() <= 40))
+        && (!('cueColor' in data) || (data.cueColor is string && data.cueColor.size() <= 30))
+        && (!('codeSnippet' in data) || (data.codeSnippet is string && data.codeSnippet.size() <= 4000))
+        && data.tags is list && data.tags.size() <= 10
+        && (data.tags.size() == 0 || (data.tags[0] is string && data.tags[0].size() <= 40))
+        && data.x is number && data.x >= -100000 && data.x <= 100000
+        && data.y is number && data.y >= -100000 && data.y <= 100000
+        && isValidSRSData(data.srsData)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLink(data, userId, linkId) {
+      return data.keys().hasAll(['id', 'ownerId', 'sourceId', 'targetId', 'relationship', 'strength', 'synapticStatus', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'sourceId', 'targetId', 'relationship', 'strength', 'synapticStatus', 'label', 'createdAt', 'updatedAt'])
+        && data.id == linkId
+        && isValidId(data.id)
+        && data.ownerId == userId
+        && isValidId(data.ownerId)
+        && isValidId(data.sourceId)
+        && isValidId(data.targetId)
+        && data.sourceId != data.targetId
+        && data.relationship in ['prerequisite', 'consolidates_into', 'analogy', 'component', 'associated_with']
+        && data.strength is number && data.strength >= 0 && data.strength <= 1
+        && data.synapticStatus in ['active', 'strengthening', 'fading', 'pruned']
+        && (!('label' in data) || (data.label is string && data.label.size() <= 120))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // User private profile
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'theme', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['subjects', 'approvedTags', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['staleLimit', 'enforceStaleGate', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['gamification', 'updatedAt'])
+        );
+      allow delete: if isValidId(userId) && isVerifiedOwner(userId);
+
+      // Memory cues subcollection
+      match /cues/{cueId} {
+        allow get: if isValidId(userId) && isValidId(cueId) && isVerifiedOwner(userId);
+        allow list: if isValidId(userId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(cueId)
+          && isVerifiedOwner(userId)
+          && isValidCue(incoming(), userId, cueId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(cueId)
+          && isVerifiedOwner(userId)
+          && isValidCue(incoming(), userId, cueId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['x', 'y', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'summary', 'content', 'category', 'subject', 'brainRegion', 'cueIcon', 'cueColor', 'tags', 'codeSnippet', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'srsData', 'brainRegion', 'updatedAt'])
+          );
+        allow delete: if isValidId(userId) && isValidId(cueId) && isVerifiedOwner(userId);
+      }
+
+      // Idea links subcollection
+      match /links/{linkId} {
+        allow get: if isValidId(userId) && isValidId(linkId) && isVerifiedOwner(userId);
+        allow list: if isValidId(userId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(linkId)
+          && isVerifiedOwner(userId)
+          && isValidLink(incoming(), userId, linkId)
+          && existsAfter(/databases/$(database)/documents/users/$(userId)/cues/$(incoming().sourceId))
+          && existsAfter(/databases/$(database)/documents/users/$(userId)/cues/$(incoming().targetId))
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(linkId)
+          && isVerifiedOwner(userId)
+          && isValidLink(incoming(), userId, linkId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['relationship', 'strength', 'synapticStatus', 'label', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(linkId) && isVerifiedOwner(userId);
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "NeuroConnect - Second Brain",
+  "description": "Interactive 3D Brain & Mindmapping Second Brain driven by Cognitive Psychology, Spaced Repetition, and Synaptic Memory Consolidation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

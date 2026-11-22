@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.git/
+.github/
+.husky/
+.aistudio/
+.vscode/
+.env*
+!.env.example
+*.log
+*.tsbuildinfo
+test-results/
+playwright-report/

@@ -1,0 +1,225 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Private user workspace preferences, curated subjects/tags, and stale memory gate settings.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name",
+          "maxLength": 100
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["dark", "light"]
+        },
+        "subjects": {
+          "type": "array",
+          "description": "Controlled list of up to 30 user subjects"
+        },
+        "approvedTags": {
+          "type": "array",
+          "description": "Controlled list of up to 50 approved tags"
+        },
+        "staleLimit": {
+          "type": "number",
+          "description": "Threshold of stale cues before capture guard triggers (1-50)"
+        },
+        "enforceStaleGate": {
+          "type": "boolean",
+          "description": "Whether capturing new cues pauses when stale queue hits threshold"
+        },
+        "gamification": {
+          "type": "object",
+          "description": "Learner XP, daily streak counter, daily review goal progress, and Quick Match high score"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "theme", "createdAt", "updatedAt"]
+    },
+    "MemoryCue": {
+      "title": "Memory Cue",
+      "description": "A visual learning cue or flashcard stored in the user's private workspace.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 8000
+        },
+        "category": {
+          "type": "string",
+          "enum": ["webdev", "psychology", "general", "todos", "insight"]
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "brainRegion": {
+          "type": "string",
+          "enum": ["prefrontal", "hippocampus", "neocortex", "amygdala", "cerebellum"]
+        },
+        "cueIcon": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "cueColor": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "status": {
+          "type": "string",
+          "enum": ["encoding", "consolidating", "mastered", "fading"]
+        },
+        "tags": {
+          "type": "array",
+          "description": "Up to 10 short topic tags"
+        },
+        "codeSnippet": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "srsData": {
+          "type": "object",
+          "description": "Spaced repetition scheduling parameters"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "title",
+        "summary",
+        "content",
+        "category",
+        "brainRegion",
+        "status",
+        "tags",
+        "x",
+        "y",
+        "srsData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "IdeaLink": {
+      "title": "Idea Link",
+      "description": "A visual connection between two memory cues.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sourceId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "targetId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "relationship": {
+          "type": "string",
+          "enum": ["prerequisite", "consolidates_into", "analogy", "component", "associated_with"]
+        },
+        "strength": {
+          "type": "number"
+        },
+        "synapticStatus": {
+          "type": "string",
+          "enum": ["active", "strengthening", "fading", "pruned"]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "sourceId",
+        "targetId",
+        "relationship",
+        "strength",
+        "synapticStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-only user workspace profile, curated subjects/tags, and stale gate settings."
+    },
+    "/users/{userId}/cues/{cueId}": {
+      "schema": { "$ref": "#/entities/MemoryCue" },
+      "description": "User's private collection of visual memory cues and SRS state."
+    },
+    "/users/{userId}/links/{linkId}": {
+      "schema": { "$ref": "#/entities/IdeaLink" },
+      "description": "User's private collection of connections between memory cues."
+    }
+  }
+}

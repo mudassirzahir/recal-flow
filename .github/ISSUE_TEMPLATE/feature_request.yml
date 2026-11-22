@@ -1,0 +1,19 @@
+name: Feature Request
+description: Propose a new learning workflow, visualization, or developer improvement
+title: '[Feature]: '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Learning or workflow problem
+      description: What learning bottleneck or workflow friction does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe how the feature should work.
+    validations:
+      required: true

@@ -1,0 +1,37 @@
+name: Bug Report
+description: Report a crash, visual bug, or unexpected behavior in RecallFlow Studio
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a bug! Please share steps so we can reproduce and fix it quickly.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Clear description of the bug or error message.
+      placeholder: Opening the Dashboard threw an unexpected error when...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Navigate to Dashboard
+        2. Capture a note with @Subject #tag
+        3. Observe behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme / Environment
+      options:
+        - Dark Mode
+        - Light Mode
+        - Mobile Viewport
+        - Self-hosted Docker / Node
+    validations:
+      required: false
