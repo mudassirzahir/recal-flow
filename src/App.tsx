@@ -487,10 +487,7 @@ function RecallFlowApp() {
     for (const n of nodes) {
       if (!idSet.has(n.id) || !n.srsData) continue;
       const nextRetention = Math.min(100, Math.round((n.srsData.retentionScore || 80) + 4));
-      const nextStability = Math.min(
-        10000,
-        Number(((n.srsData.stability || 3) + 0.5).toFixed(1))
-      );
+      const nextStability = Math.min(10000, Number(((n.srsData.stability || 3) + 0.5).toFixed(1)));
       const nextStatus: ConceptNode['status'] =
         nextRetention >= 90 && (n.srsData.reps || 1) >= 3
           ? 'mastered'
@@ -847,10 +844,7 @@ function RecallFlowApp() {
           ...currentSRS,
           reps: newReps,
           intervalDays: newInterval,
-          stability: Math.min(
-            10000,
-            Math.round(currentSRS.stability * (rating >= 3 ? 1.5 : 0.8))
-          ),
+          stability: Math.min(10000, Math.round(currentSRS.stability * (rating >= 3 ? 1.5 : 0.8))),
           lastReviewedAt: new Date().toISOString(),
           nextReviewDate: nextDate,
           retentionScore: newRetention
@@ -891,11 +885,7 @@ function RecallFlowApp() {
         ...n,
         brainRegion: n.brainRegion === 'hippocampus' ? 'prefrontal' : n.brainRegion,
         status:
-          nextRetention >= 75
-            ? n.status === 'mastered'
-              ? 'mastered'
-              : 'consolidating'
-            : n.status,
+          nextRetention >= 75 ? (n.status === 'mastered' ? 'mastered' : 'consolidating') : n.status,
         srsData: {
           ...n.srsData,
           retentionScore: nextRetention,
@@ -1129,7 +1119,6 @@ function RecallFlowApp() {
               onEditNode={handleOpenEditModal}
               onDeleteNode={handleDeleteNode}
               onPracticeNode={handlePracticeNode}
-              onStartSubjectPractice={handleStartDuePractice}
               onOpenOnMap={handleOpenOnMap}
               pinnedIds={pinnedIds}
               onTogglePin={handleTogglePin}
@@ -1142,9 +1131,6 @@ function RecallFlowApp() {
             <SpacedRepetitionDeck
               nodes={nodes}
               subjects={subjects}
-              gamification={gamification}
-              pinnedIds={pinnedIds}
-              onTogglePin={handleTogglePin}
               initialSubjectFilter={practiceSubjectFilter}
               onClearSubjectFilter={() => setPracticeSubjectFilter('all')}
               initialMethod={practiceMethodOverride}
@@ -1152,7 +1138,6 @@ function RecallFlowApp() {
               onReviewNode={handleReviewNode}
               onBlitzComplete={handleBlitzComplete}
               onEditNode={handleOpenEditModal}
-              onOpenQuickCapture={handleOpenCreateModal}
               onGoToNotes={() => navigateView('notes')}
               onShowToast={showToast}
               focusNodeId={focusedPracticeNodeId}
@@ -1171,8 +1156,6 @@ function RecallFlowApp() {
               enforceStaleGate={enforceStaleGate}
               onUpdateStaleSettings={handleUpdateStaleSettings}
               onUpdateDailyGoal={handleUpdateDailyGoal}
-              onStartDuePractice={() => handleStartDuePractice()}
-              onOpenNotes={() => navigateView('notes')}
             />
           )}
 
